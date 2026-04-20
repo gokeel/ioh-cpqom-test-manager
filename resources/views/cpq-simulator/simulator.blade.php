@@ -1,4 +1,14 @@
-<div class="mt-8 bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-gray-100 p-6" x-data="cpqSimulator()">
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-brand-dark leading-tight">
+            {{ __('CPQ Simulator') }}
+        </h2>
+    </x-slot>
+
+    <div class="py-8 bg-gray-50 min-h-screen">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+<div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-gray-100 p-6" x-data="cpqSimulator()">
     <div class="border-b border-gray-200 pb-4 mb-6">
         <h3 class="text-2xl font-bold text-brand-dark">Salesforce Vlocity CPQ Simulator</h3>
         <p class="text-gray-600 mt-1">Simulate a sequential CPQ quote flow using the API proxy.</p>
@@ -262,17 +272,27 @@
                                                         :key="key">
                                                         <template x-if="key !== '_saved'">
                                                             <div>
-                                                                <x-input-label x-text="key" />
+                                                                <div class="flex items-center gap-1">
+                                                                    <x-input-label
+                                                                        x-text="childAttrsMeta[child.Id]?.[key]?.label" />
+                                                                    <template
+                                                                        x-if="childAttrsMeta[child.Id]?.[key]?.required">
+                                                                        <span
+                                                                            class="text-red-500 text-xs font-bold">*</span>
+                                                                    </template>
+                                                                </div>
                                                                 <!-- Dropdown for inputType === 'dropdown' -->
                                                                 <template
                                                                     x-if="childAttrsMeta[child.Id]?.[key]?.inputType === 'dropdown'">
                                                                     <select x-model="childAttributes[child.Id][key]"
+                                                                        :required="childAttrsMeta[child.Id] && childAttrsMeta[child.Id][key] && childAttrsMeta[child.Id][key].required"
                                                                         class="mt-1 block w-full border-gray-300 focus:border-brand-teal focus:ring-brand-teal rounded-md shadow-sm text-xs">
                                                                         <option value="">-- None --</option>
                                                                         <template
                                                                             x-for="opt in (childAttrsMeta[child.Id]?.[key]?.values || [])"
                                                                             :key="opt.value">
                                                                             <option :value="opt.value"
+                                                                                :selected="String(childAttributes[child.Id][key]) === String(opt.value)"
                                                                                 x-text="opt.value"></option>
                                                                         </template>
                                                                     </select>
@@ -280,9 +300,10 @@
                                                                 <!-- Text input for all other types -->
                                                                 <template
                                                                     x-if="childAttrsMeta[child.Id]?.[key]?.inputType !== 'dropdown'">
-                                                                    <x-text-input type="text"
+                                                                    <input type="text"
                                                                         x-model="childAttributes[child.Id][key]"
-                                                                        class="mt-1 block w-full text-xs" />
+                                                                        :required="childAttrsMeta[child.Id] && childAttrsMeta[child.Id][key] && childAttrsMeta[child.Id][key].required"
+                                                                        class="mt-1 block w-full text-xs border-gray-300 focus:border-brand-teal focus:ring-brand-teal rounded-md shadow-sm" />
                                                                 </template>
                                                             </div>
                                                         </template>
@@ -342,7 +363,8 @@
         style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; display: flex; align-items: center; justify-content: center;">
         <div @click="showAddProductModal = false"
             style="position: absolute; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);"></div>
-        <div style="position: relative; background: white; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); width: 90%; max-width: 600px; padding: 2rem; z-index: 10000; margin: auto; max-height: 85vh; overflow-y: auto;">
+        <div
+            style="position: relative; background: white; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); width: 90%; max-width: 600px; padding: 2rem; z-index: 10000; margin: auto; max-height: 85vh; overflow-y: auto;">
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <h3 class="font-bold text-xl text-brand-dark">Add Product to Cart</h3>
@@ -460,7 +482,7 @@
                 this.childItems = [];
                 this.fetchingQuotes = true;
 
-                const q = `SELECT Id, Name, Status, vlocity_cmt__PriceListId__c FROM Quote WHERE OpportunityId = '${oppId}' ORDER BY CreatedDate DESC LIMIT 20`;
+                const q = `SELECT Id, Name, Status, vlocity_cmt__PriceListId__c FROM Quote WHERE OpportunityId = '${oppId}' AND vlocity_cmt__ParentQuoteId__c = null ORDER BY CreatedDate DESC LIMIT 20`;
                 const res = await this.executeProxy('GET', `/services/data/v66.0/query?q=${encodeURIComponent(q)}`);
 
                 if (res.success && res.data.records) {
@@ -723,7 +745,9 @@
                                     attrs[key] = currentVal;
                                     meta[key] = {
                                         inputType: attr.inputType || 'text',
-                                        values: attr.values || []
+                                        values: attr.values || [],
+                                        required: attr.required === true,
+                                        label: attr.label
                                     };
                                 }
                             });
@@ -771,3 +795,7 @@
         }));
     });
 </script>
+
+        </div>
+    </div>
+</x-app-layout>

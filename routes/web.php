@@ -21,7 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/auth/salesforce/callback', [App\Http\Controllers\SalesforceOAuthController::class, 'callback'])->name('salesforce.callback');
     Route::resource('object-sync', App\Http\Controllers\ObjectSyncController::class);
 
-    // CPQ Simulator Proxy
+    // CPQ Simulator
+    Route::get('/cpq-simulator', [App\Http\Controllers\CpqSimulatorController::class, 'index'])->name('cpq-simulator.index');
     Route::post('/cpq-simulator/proxy', [App\Http\Controllers\CpqSimulatorController::class, 'proxy'])->name('cpq-simulator.proxy');
     
     // Modules & Test Cases

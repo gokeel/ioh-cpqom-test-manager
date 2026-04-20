@@ -8,6 +8,15 @@ use Illuminate\Support\Facades\Http;
 class CpqSimulatorController extends Controller
 {
     /**
+     * Display the CPQ Simulator page.
+     */
+    public function index()
+    {
+        $sfUsers = \App\Models\SalesforceUser::orderBy('label')->get();
+        return view('cpq-simulator.simulator', compact('sfUsers'));
+    }
+
+    /**
      * Proxies a request to Salesforce to bypass CORS limitations in the browser.
      */
     public function proxy(Request $request, \App\Services\SalesforceService $salesforceService)

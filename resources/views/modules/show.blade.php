@@ -109,10 +109,6 @@
             </div>
 
         </div>
-
-        @if($module->id == 2)
-            @include('cpq-simulator.simulator')
-        @endif
     </div>
 
     <!-- Add Test Modal (Simplified for Demo) -->

@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('object-sync.index')" :active="request()->routeIs('object-sync.*')">
                         {{ __('Object Sync Manager') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('cpq-simulator.index')" :active="request()->routeIs('cpq-simulator.*')">
+                        {{ __('CPQ Simulator') }}
+                    </x-nav-link>
                 </div>
             </div>
 
