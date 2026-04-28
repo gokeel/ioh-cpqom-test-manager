@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use App\Models\SalesforceUser;
+use App\Services\SalesforceService;
 
 class CpqSimulatorController extends Controller
 {
@@ -75,5 +78,47 @@ class CpqSimulatorController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function rootProducts(Request $request, SalesforceService $salesforceService)
+    {
+        $request->validate([
+            'cart_id'       => 'required|string',
+            'price_list_id' => 'required|string',
+            'persona_id'    => 'nullable|exists:salesforce_users,id',
+        ]);
+
+        $cartId      = $request->input('cart_id');
+        $priceListId = $request->input('price_list_id');
+        $personaId   = $request->input('persona_id');
+        $cacheKey    = "cpq_root_products_{$cartId}_{$priceListId}";
+
+        $products = Cache::remember($cacheKey, 86400, function () use (
+            $cartId, $priceListId, $personaId, $salesforceService
+        ) {
+            $sfUser = null;
+            if ($personaId) {
+                $sfUser = SalesforceUser::find($personaId);
+                $token  = $salesforceService->getAccessTokenForUser($sfUser);
+            } else {
+                $token = $salesforceService->getAccessToken();
+            }
+
+            $baseUrl  = rtrim(env('SALESFORCE_URL', ''), '/');
+            $endpoint = "/services/apexrest/vlocity_cmt/v2/cpq/carts/{$cartId}/products"
+                      . "?hierarchy=0&pagesize=200&includeAttachment=false&includeAttributes=true"
+                      . "&priceListId={$priceListId}";
+
+            $response = Http::withToken($token)->acceptJson()->asJson()->timeout(60)->get($baseUrl . $endpoint);
+
+            if ($response->status() === 401 && $sfUser) {
+                $token    = $salesforceService->refreshUserToken($sfUser);
+                $response = Http::withToken($token)->acceptJson()->asJson()->timeout(60)->get($baseUrl . $endpoint);
+            }
+
+            return $response->json();
+        });
+
+        return response()->json($products);
     }
 }

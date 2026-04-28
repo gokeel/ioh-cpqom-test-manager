@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     // CPQ Simulator
     Route::get('/cpq-simulator', [App\Http\Controllers\CpqSimulatorController::class, 'index'])->name('cpq-simulator.index');
     Route::post('/cpq-simulator/proxy', [App\Http\Controllers\CpqSimulatorController::class, 'proxy'])->name('cpq-simulator.proxy');
+    Route::get('/cpq-simulator/root-products', [App\Http\Controllers\CpqSimulatorController::class, 'rootProducts'])->name('cpq-simulator.root-products');
 
     // Test Suite
     Route::get('/test-suite', [App\Http\Controllers\TestSuiteController::class, 'index'])->name('test-suite.index');

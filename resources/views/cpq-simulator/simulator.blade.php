@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-8 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
 
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-gray-100 p-6" x-data="cpqSimulator()">
     <div class="border-b border-gray-200 pb-4 mb-6">
@@ -26,118 +26,146 @@
         </select>
     </div>
 
-    <!-- Step 0: Get Opportunities -->
-    <div class="mb-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-        <div class="flex justify-between items-center mb-4">
-            <h4 class="font-bold text-lg">Initialization: Select Opportunity</h4>
-            <button @click="fetchOpportunities()" :disabled="isLoading"
-                class="px-3 py-1 bg-brand-teal text-white rounded shadow text-sm disabled:opacity-50">
-                Load Opportunities
-            </button>
-        </div>
+    <!-- Opportunities + Quote Selection side by side -->
+    <div class="mb-4" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
 
-        <template x-if="opportunities.length > 0">
-            <div class="mt-4 overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
-                <table class="min-w-full divide-y-2 divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 text-left">Opportunity Name
-                            </th>
-                            <th class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 text-left">ID</th>
-                            <th class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 text-left">Stage</th>
-                            <th class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 text-left">Owner</th>
-                            <th class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <template x-for="opp in opportunities" :key="opp.Id">
-                            <tr class="transition-colors"
-                                :class="selectedOpportunityId === opp.Id ? 'bg-brand-teal bg-opacity-10' : 'hover:bg-gray-50'">
-                                <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900" x-text="opp.Name">
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-gray-500 font-mono text-xs" x-text="opp.Id">
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-gray-500" x-text="opp.StageName"></td>
-                                <td class="whitespace-nowrap px-6 py-4 text-gray-500" x-text="opp.Owner?.Name"></td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right">
-                                    <button @click="selectOpportunity(opp.Id)"
-                                        class="px-3 py-1 bg-brand-teal text-white rounded shadow text-xs">
-                                        <span x-text="selectedOpportunityId === opp.Id ? 'Selected' : 'Select'"></span>
-                                    </button>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </template>
-    </div>
-
-    <!-- Quote Selection/Creation Panel -->
-    <div class="mb-4 border border-gray-200 rounded-lg bg-white shadow-sm" x-show="selectedOpportunityId">
-        <!-- Panel Header -->
-        <div class="flex justify-between items-center px-5 py-4 border-b border-gray-200">
-            <div>
-                <h4 class="font-bold text-lg text-brand-dark">Quote Selection / Creation</h4>
-                <p class="text-xs text-gray-500 mt-0.5">Select an existing quote or create a new one</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <template x-if="cartId">
-                    <div
-                        class="flex items-center gap-2 text-xs bg-green-50 border border-green-200 text-green-700 rounded-md px-3 py-1.5">
-                        <span>✓ Active Cart:</span>
-                        <span x-text="cartId" class="font-mono font-bold"></span>
-                    </div>
-                </template>
-                <button @click="showNewQuoteModal = true" :disabled="!selectedOpportunityId"
-                    class="px-4 py-2 bg-brand-teal text-white rounded-lg shadow text-sm font-medium flex items-center gap-2 hover:opacity-90 transition disabled:opacity-50">
-                    <span>＋</span> New Quote
+        <!-- Step 0: Get Opportunities -->
+        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="font-bold text-lg">Initialization: Select Opportunity</h4>
+                <button @click="fetchOpportunities()" :disabled="isLoading"
+                    class="px-3 py-1 bg-brand-teal text-white rounded shadow text-sm disabled:opacity-50">
+                    Load Opportunities
                 </button>
             </div>
-        </div>
 
-        <!-- Quotes Table -->
-        <div class="p-5">
-            <div x-show="fetchingQuotes" class="text-sm text-gray-500 animate-pulse py-4 text-center">Fetching quotes...
-            </div>
-            <template x-if="!fetchingQuotes && quotes.length === 0">
-                <div class="text-sm text-gray-400 py-6 text-center">No quotes found for this opportunity.</div>
-            </template>
-            <template x-if="!fetchingQuotes && quotes.length > 0">
-                <div class="overflow-x-auto border border-gray-100 rounded-lg">
-                    <table class="min-w-full divide-y-2 divide-gray-100 text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Quote Name
-                                </th>
-                                <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">ID</th>
-                                <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Status</th>
-                                <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <template x-for="q in quotes" :key="q.Id">
-                                <tr class="transition-colors"
-                                    :class="cartId === q.Id ? 'bg-brand-teal bg-opacity-10' : 'hover:bg-gray-50'">
-                                    <td class="whitespace-nowrap px-4 py-3 font-medium text-gray-900" x-text="q.Name">
-                                    </td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-gray-500 font-mono text-xs"
-                                        x-text="q.Id"></td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-gray-500" x-text="q.Status"></td>
-                                    <td class="whitespace-nowrap px-4 py-3 text-right">
-                                        <button @click="selectQuote(q)"
-                                            :class="cartId === q.Id ? 'bg-green-600' : 'bg-brand-teal'"
-                                            class="px-3 py-1 text-white rounded shadow text-xs transition">
-                                            <span x-text="cartId === q.Id ? '✓ Selected' : 'Use Quote'"></span>
-                                        </button>
-                                    </td>
+            <template x-if="opportunities.length > 0">
+                <div class="mt-4">
+                    <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <table class="min-w-full divide-y-2 divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Opportunity Name</th>
+                                    <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Stage</th>
+                                    <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Owner</th>
+                                    <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-right">Action</th>
                                 </tr>
-                            </template>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="opp in paginatedOpportunities()" :key="opp.Id">
+                                    <tr class="transition-colors"
+                                        :class="selectedOpportunityId === opp.Id ? 'bg-brand-teal bg-opacity-10' : 'hover:bg-gray-50'">
+                                        <td class="px-4 py-3 font-medium text-gray-900 text-sm" x-text="opp.Name"></td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-gray-500 text-sm" x-text="opp.StageName"></td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-gray-500 text-sm" x-text="opp.Owner?.Name"></td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-right">
+                                            <button @click="selectOpportunity(opp.Id)"
+                                                class="px-3 py-1 bg-brand-teal text-white rounded shadow text-xs">
+                                                <span x-text="selectedOpportunityId === opp.Id ? 'Selected' : 'Select'"></span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination controls -->
+                    <div class="flex items-center justify-between mt-3 px-1">
+                        <span class="text-xs text-gray-500"
+                            x-text="`Showing ${Math.min((oppPage - 1) * oppPageSize + 1, opportunities.length)}–${Math.min(oppPage * oppPageSize, opportunities.length)} of ${opportunities.length}`">
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button @click="oppPage--" :disabled="oppPage <= 1"
+                                class="px-2 py-1 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100">
+                                ← Prev
+                            </button>
+                            <span class="text-xs text-gray-600"
+                                x-text="`${oppPage} / ${Math.ceil(opportunities.length / oppPageSize)}`">
+                            </span>
+                            <button @click="oppPage++" :disabled="oppPage >= Math.ceil(opportunities.length / oppPageSize)"
+                                class="px-2 py-1 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100">
+                                Next →
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </template>
         </div>
+
+        <!-- Quote Selection/Creation Panel -->
+        <div class="border border-gray-200 rounded-lg bg-white shadow-sm">
+            <!-- Placeholder when no opportunity selected -->
+            <template x-if="!selectedOpportunityId">
+                <div class="flex items-center justify-center h-full py-16 text-sm text-gray-400">
+                    Select an opportunity to view quotes.
+                </div>
+            </template>
+
+            <template x-if="selectedOpportunityId">
+                <div>
+                    <!-- Panel Header -->
+                    <div class="flex justify-between items-center px-5 py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-bold text-lg text-brand-dark">Quote Selection / Creation</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">Select an existing quote or create a new one</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <template x-if="cartId">
+                                <div
+                                    class="flex items-center gap-2 text-xs bg-green-50 border border-green-200 text-green-700 rounded-md px-3 py-1.5">
+                                    <span>✓ Active Cart:</span>
+                                    <span x-text="cartId" class="font-mono font-bold"></span>
+                                </div>
+                            </template>
+                            <button @click="showNewQuoteModal = true" :disabled="!selectedOpportunityId"
+                                class="px-4 py-2 bg-brand-teal text-white rounded-lg shadow text-sm font-medium flex items-center gap-2 hover:opacity-90 transition disabled:opacity-50">
+                                <span>＋</span> New Quote
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quotes Table -->
+                    <div class="p-5">
+                        <div x-show="fetchingQuotes" class="text-sm text-gray-500 animate-pulse py-4 text-center">Fetching quotes...</div>
+                        <template x-if="!fetchingQuotes && quotes.length === 0">
+                            <div class="text-sm text-gray-400 py-6 text-center">No quotes found for this opportunity.</div>
+                        </template>
+                        <template x-if="!fetchingQuotes && quotes.length > 0">
+                            <div class="overflow-x-auto border border-gray-100 rounded-lg">
+                                <table class="min-w-full divide-y-2 divide-gray-100 text-sm">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Quote Name</th>
+                                            <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">ID</th>
+                                            <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-left">Status</th>
+                                            <th class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <template x-for="q in quotes" :key="q.Id">
+                                            <tr class="transition-colors"
+                                                :class="cartId === q.Id ? 'bg-brand-teal bg-opacity-10' : 'hover:bg-gray-50'">
+                                                <td class="whitespace-nowrap px-4 py-3 font-medium text-gray-900" x-text="q.Name"></td>
+                                                <td class="whitespace-nowrap px-4 py-3 text-gray-500 font-mono text-xs" x-text="q.Id"></td>
+                                                <td class="whitespace-nowrap px-4 py-3 text-gray-500" x-text="q.Status"></td>
+                                                <td class="whitespace-nowrap px-4 py-3 text-right">
+                                                    <button @click="selectQuote(q)"
+                                                        :class="cartId === q.Id ? 'bg-green-600' : 'bg-brand-teal'"
+                                                        class="px-3 py-1 text-white rounded shadow text-xs transition">
+                                                        <span x-text="cartId === q.Id ? '✓ Selected' : 'Use Quote'"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+
     </div>
 
     <!-- New Quote Modal -->
@@ -414,6 +442,8 @@
             isLoading: false,
 
             opportunities: [],
+            oppPage: 1,
+            oppPageSize: 15,
             selectedOpportunityId: '',
 
             quotes: [],
@@ -444,6 +474,11 @@
             childAttributes: {},
             childAttrsMeta: {},
             childPricing: {},
+
+            paginatedOpportunities() {
+                const start = (this.oppPage - 1) * this.oppPageSize;
+                return this.opportunities.slice(start, start + this.oppPageSize);
+            },
 
             async executeProxy(method, endpoint, payload = null) {
                 this.isLoading = true;
@@ -565,6 +600,7 @@
             },
 
             async fetchOpportunities() {
+                this.oppPage = 1;
                 let query = `SELECT Id, Name, StageName, Owner.Name FROM Opportunity WHERE (StageName = 'Scoping' OR StageName = 'Quoting')`;
 
                 const selectEl = document.getElementById('sf_persona');
@@ -624,18 +660,27 @@
             },
 
             async getRootProducts() {
-                // Use the pricelist from the selected quote if available
                 const priceListId = this.cartPriceListId || this.quoteConfig.PriceListId;
-                const endpoint = `/services/apexrest/vlocity_cmt/v2/cpq/carts/${this.cartId}/products?hierarchy=0&pagesize=200&includeAttachment=false&includeAttributes=true&priceListId=${priceListId}`;
-                console.log('[getRootProducts] Calling:', endpoint, '| cartPriceListId:', this.cartPriceListId, '| quoteConfig.PriceListId:', this.quoteConfig.PriceListId);
-                const res = await this.executeProxy('GET', endpoint);
-                console.log('[getRootProducts] Response:', res);
-                if (res.success && res.data.records) {
-                    this.rootProducts = res.data.records;
-                } else {
-                    const errDetail = res.data ? JSON.stringify(res.data, null, 2) : `HTTP ${res.status}`;
-                    console.error('[getRootProducts] Failed:', res);
-                    alert(`Failed to get root products.\n\nStatus: ${res.status}\n${errDetail}`);
+                this.isLoading = true;
+                try {
+                    const response = await axios.get('/cpq-simulator/root-products', {
+                        params: {
+                            cart_id: this.cartId,
+                            price_list_id: priceListId,
+                            persona_id: this.selectedPersonaId || null
+                        },
+                        timeout: 60000
+                    });
+                    if (response.data && response.data.records) {
+                        this.rootProducts = response.data.records;
+                    } else {
+                        alert('Failed to get root products.');
+                    }
+                } catch (error) {
+                    console.error('[getRootProducts] Failed:', error);
+                    alert(`Failed to get root products.\n${error.message}`);
+                } finally {
+                    this.isLoading = false;
                 }
             },
 
