@@ -31,7 +31,7 @@
                 <div class="space-y-4">
 
                     <!-- Persona -->
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
                         <h4 class="text-sm font-bold text-brand-dark mb-3">Salesforce Persona</h4>
                         <select x-model="selectedPersonaId"
                                 class="block w-full border-gray-300 focus:border-brand-teal focus:ring-brand-teal rounded-md shadow-sm text-sm">
@@ -45,8 +45,8 @@
                     </div>
 
                     <!-- Opportunity -->
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-center justify-between mb-3">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="px-5 py-4 flex items-center justify-between mb-3">
                             <h4 class="text-sm font-bold text-brand-dark">Opportunity</h4>
                             <button @click="fetchOpportunities()" :disabled="isLoading"
                                     class="text-xs px-3 py-1.5 bg-brand-teal text-white rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50">
@@ -104,78 +104,85 @@
                     </div>
 
                     <!-- Quote Config -->
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-                        <h4 class="text-sm font-bold text-brand-dark">Quote Configuration</h4>
-
-                        <div>
-                            <x-input-label value="Quote Name" />
-                            <x-text-input type="text" x-model="quoteName" class="mt-1 block w-full text-sm" />
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-4 border-b border-gray-100">
+                            <h4 class="text-sm font-bold text-brand-dark">Quote Configuration</h4>
                         </div>
-
-                        <div>
-                            <x-input-label value="Price List" />
-                            <div class="flex gap-2 mt-1">
-                                <select x-model="priceListId"
-                                        class="flex-1 border-gray-300 focus:border-brand-teal focus:ring-brand-teal rounded-md shadow-sm text-sm">
-                                    <option value="">— Select Price List —</option>
-                                    <template x-for="pl in priceLists" :key="pl.Id">
-                                        <option :value="pl.Id" x-text="pl.Name"></option>
-                                    </template>
-                                </select>
-                                <button @click="fetchPriceLists()" :disabled="isLoading || priceLists.length > 0"
-                                        class="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 disabled:opacity-50 whitespace-nowrap">
-                                    Load
-                                </button>
+                        <div class="divide-y divide-gray-100">
+                            <div class="px-5 py-4">
+                                <x-input-label value="Quote Name" />
+                                <x-text-input type="text" x-model="quoteName" class="mt-2 block w-full text-sm" />
                             </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div>
-                                <x-input-label value="Currency" />
-                                <x-text-input type="text" x-model="currency" class="mt-1 block w-full text-sm" />
+                            <div class="px-5 py-4">
+                                <x-input-label value="Price List" />
+                                <div class="mt-2 relative">
+                                    <select x-model="priceListId"
+                                            :disabled="priceLists.length === 0"
+                                            class="block w-full border-gray-300 focus:border-brand-teal focus:ring-brand-teal rounded-md shadow-sm text-sm disabled:opacity-50">
+                                        <option value="" x-text="priceLists.length === 0 ? 'Loading…' : '— Select Price List —'"></option>
+                                        <template x-for="pl in priceLists" :key="pl.Id">
+                                            <option :value="pl.Id" x-text="pl.Name"></option>
+                                        </template>
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <x-input-label value="Record Type ID" />
-                                <x-text-input type="text" x-model="recordTypeId" class="mt-1 block w-full text-sm font-mono text-xs" />
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0;" class="divide-x divide-gray-100">
+                                <div class="px-5 py-4">
+                                    <x-input-label value="Currency" />
+                                    <x-text-input type="text" x-model="currency" class="mt-2 block w-full text-sm" />
+                                </div>
+                                <div class="px-5 py-4">
+                                    <x-input-label value="Record Type ID" />
+                                    <div class="mt-2 relative">
+                                        <input type="text" :value="recordTypeId" readonly
+                                               class="block w-full border-gray-200 bg-gray-50 rounded-md shadow-sm text-sm font-mono text-xs text-gray-600 px-3 py-2 cursor-default" />
+                                        <span x-show="!recordTypeId"
+                                              class="absolute inset-y-0 left-3 flex items-center text-xs text-gray-400 pointer-events-none">
+                                            Loading…
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Test Options -->
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-                        <h4 class="text-sm font-bold text-brand-dark">Test Options</h4>
-
-                        <div>
-                            <x-input-label value="Number of Random Products (1–20)" />
-                            <x-text-input type="number" x-model.number="productCount" min="1" max="20" class="mt-1 block w-32 text-sm" />
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-4 border-b border-gray-100">
+                            <h4 class="text-sm font-bold text-brand-dark">Test Options</h4>
                         </div>
-
-                        <!-- Randomize Attributes -->
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-                            <input type="checkbox" x-model="randomizeAttributes"
-                                   class="rounded border-gray-300 text-brand-teal focus:ring-brand-teal" />
-                            Randomize attributes on bundle child items
-                        </label>
-
-                        <!-- Override Pricing -->
-                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-                            <input type="checkbox" x-model="overridePricing"
-                                   class="rounded border-gray-300 text-brand-teal focus:ring-brand-teal" />
-                            Override OTC / RC pricing
-                        </label>
-
-                        <template x-if="overridePricing">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="pt-1">
-                                <div>
-                                    <x-input-label value="OTC Override (leave blank to skip)" />
-                                    <x-text-input type="number" x-model.number="otcOverride" min="0" step="0.01" class="mt-1 block w-full text-sm" placeholder="e.g. 150000" />
-                                </div>
-                                <div>
-                                    <x-input-label value="RC Override (leave blank to skip)" />
-                                    <x-text-input type="number" x-model.number="rcOverride" min="0" step="0.01" class="mt-1 block w-full text-sm" placeholder="e.g. 50000" />
-                                </div>
+                        <div class="divide-y divide-gray-100">
+                            <div class="px-5 py-4">
+                                <x-input-label value="Number of Random Products (1–20)" />
+                                <x-text-input type="number" x-model.number="productCount" min="1" max="20" class="mt-2 block w-32 text-sm" />
                             </div>
-                        </template>
+                            <div class="px-5 py-4">
+                                <label class="flex items-center gap-3 cursor-pointer text-sm text-gray-700">
+                                    <input type="checkbox" x-model="randomizeAttributes"
+                                           class="rounded border-gray-300 text-brand-teal focus:ring-brand-teal" />
+                                    Randomize attributes on bundle child items
+                                </label>
+                            </div>
+                            <div class="px-5 py-4">
+                                <label class="flex items-center gap-3 cursor-pointer text-sm text-gray-700">
+                                    <input type="checkbox" x-model="overridePricing"
+                                           class="rounded border-gray-300 text-brand-teal focus:ring-brand-teal" />
+                                    Override OTC / RC pricing
+                                </label>
+                                <template x-if="overridePricing">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="mt-4">
+                                        <div>
+                                            <x-input-label value="OTC Override (leave blank to skip)" />
+                                            <x-text-input type="number" x-model.number="otcOverride" min="0" step="0.01" class="mt-2 block w-full text-sm" placeholder="e.g. 150000" />
+                                        </div>
+                                        <div>
+                                            <x-input-label value="RC Override (leave blank to skip)" />
+                                            <x-text-input type="number" x-model.number="rcOverride" min="0" step="0.01" class="mt-2 block w-full text-sm" placeholder="e.g. 50000" />
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Run Button -->
@@ -360,7 +367,7 @@
                 quoteName: 'API Test — {{ $testModule->display_name }}',
                 priceListId: '',
                 currency: 'IDR',
-                recordTypeId: '012MS000000GkkxYAC',
+                recordTypeId: '',
                 productCount: 3,
                 randomizeAttributes: true,
                 overridePricing: false,
@@ -369,6 +376,13 @@
 
                 running: false,
                 result: null,
+
+                async init() {
+                    await Promise.all([
+                        this.fetchPriceLists(),
+                        this.fetchRecordTypeId(),
+                    ]);
+                },
 
                 paginatedOpportunities() {
                     const start = (this.oppPage - 1) * this.oppPageSize;
@@ -395,6 +409,22 @@
                         alert(`Error: ${e.message}`);
                     } finally {
                         this.isLoading = false;
+                    }
+                },
+
+                async fetchRecordTypeId() {
+                    try {
+                        const q = `SELECT Id FROM RecordType WHERE DeveloperName = 'EnterpriseQuote' AND SobjectType = 'Quote' LIMIT 1`;
+                        const res = await axios.post('/cpq-simulator/proxy', {
+                            method: 'GET',
+                            endpoint: `/services/data/v66.0/query?q=${encodeURIComponent(q)}`,
+                            persona_id: null,
+                            payload: null,
+                        }, { timeout: 15000 });
+                        const id = res.data?.data?.records?.[0]?.Id;
+                        if (id) this.recordTypeId = id;
+                    } catch (e) {
+                        console.error('Failed to load Record Type ID:', e);
                     }
                 },
 
