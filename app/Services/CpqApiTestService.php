@@ -87,31 +87,46 @@ class CpqApiTestService
             }
             $steps[] = ['label' => 'Create Quote', 'status' => 'ok', 'detail' => "cartId: {$cartId}"];
 
-            // ── Step 2: Fetch Root Products (cached 24h) ──────────────────
-            $priceListId = $config['price_list_id'];
-            $cacheKey    = "cpq_root_products_{$cartId}_{$priceListId}";
+            // ── Step 2+3: Determine which products to add ────────────────
+            $quantity      = max(1, (int) ($config['product_quantity'] ?? 1));
+            $selectionMode = $config['selection_mode'] ?? 'random';
 
-            $productsData = Cache::remember($cacheKey, 86400, function () use ($call, $cartId, $priceListId) {
-                $res = $call('GET', "/services/apexrest/vlocity_cmt/v2/cpq/carts/{$cartId}/products"
-                    . "?hierarchy=0&pagesize=200&includeAttachment=false&includeAttributes=true"
-                    . "&priceListId={$priceListId}");
-                return $res->json();
-            });
+            if ($selectionMode === 'manual') {
+                $manualProducts = $config['selected_products'] ?? [];
+                $selected       = array_map(fn($p) => [
+                    'Id'   => $p['id'] ?? $p['Id'],
+                    'Name' => $p['name'] ?? $p['Name'] ?? '',
+                ], $manualProducts);
+                $expectedCount = count($selected);
+                $steps[] = ['label' => 'Product Selection (Manual)', 'status' => 'ok',
+                    'detail' => $expectedCount . ' product(s): ' . implode(', ', array_column($selected, 'Name'))];
+            } else {
+                $priceListId = $config['price_list_id'];
+                $cacheKey    = "cpq_root_products_{$priceListId}";
 
-            $allProducts = $productsData['records'] ?? [];
-            if (empty($allProducts)) {
-                return $this->fail('No root products found for this cart/pricelist', $productsData, $steps);
+                // Use the shared priceList-scoped cache; populate from this cart if it's a miss.
+                $allProducts = Cache::remember($cacheKey, 86400, function () use ($call, $cartId, $priceListId) {
+                    $res = $call('GET', "/services/apexrest/vlocity_cmt/v2/cpq/carts/{$cartId}/products"
+                        . "?hierarchy=0&pagesize=200&includeAttachment=false&includeAttributes=true"
+                        . "&priceListId={$priceListId}");
+                    return array_map(fn($p) => [
+                        'Id'   => is_array($p['Id'] ?? null) ? ($p['Id']['value'] ?? '') : ($p['Id'] ?? ''),
+                        'Name' => $p['Product2']['Name'] ?? $p['Name'] ?? '',
+                    ], $res->json()['records'] ?? []);
+                });
+
+                if (empty($allProducts)) {
+                    return $this->fail('No root products found for this price list', null, $steps);
+                }
+                $steps[] = ['label' => 'Fetch Root Products', 'status' => 'ok', 'detail' => count($allProducts) . ' available'];
+
+                $count    = min((int) $config['product_count'], count($allProducts));
+                $keys     = (array) array_rand($allProducts, $count);
+                $selected = array_map(fn($k) => $allProducts[$k], $keys);
+                $expectedCount = $count;
+                $steps[] = ['label' => 'Select Random Products', 'status' => 'ok',
+                    'detail' => $count . ' product(s): ' . implode(', ', array_column($selected, 'Name'))];
             }
-
-            $steps[] = ['label' => 'Fetch Root Products', 'status' => 'ok', 'detail' => count($allProducts) . ' available'];
-
-            // ── Step 3: Pick N random products ────────────────────────────
-            $count    = min((int) $config['product_count'], count($allProducts));
-            $keys     = (array) array_rand($allProducts, $count);
-            $selected = array_map(fn($k) => $allProducts[$k], $keys);
-
-            $steps[] = ['label' => 'Select Random Products', 'status' => 'ok',
-                'detail' => $count . ' product(s): ' . implode(', ', array_map(fn($p) => $p['Product2']['Name'] ?? $p['Name'] ?? 'unknown', $selected))];
 
             // ── Step 4: Add each product to cart ─────────────────────────
             foreach ($selected as $prod) {
@@ -120,14 +135,14 @@ class CpqApiTestService
                     'cartId'   => $cartId,
                     'price'    => true,
                     'validate' => true,
-                    'items'    => [['itemId' => $itemId, 'quantity' => 1]],
+                    'items'    => [['itemId' => $itemId, 'quantity' => $quantity]],
                 ]);
 
                 $prodName = $prod['Product2']['Name'] ?? $prod['Name'] ?? $itemId;
                 if (!$addRes->successful()) {
                     $steps[] = ['label' => "Add Product: {$prodName}", 'status' => 'error', 'detail' => $addRes->body()];
                 } else {
-                    $steps[] = ['label' => "Add Product: {$prodName}", 'status' => 'ok', 'detail' => ''];
+                    $steps[] = ['label' => "Add Product: {$prodName} (qty: {$quantity})", 'status' => 'ok', 'detail' => ''];
                 }
             }
 
@@ -210,9 +225,9 @@ class CpqApiTestService
             // ── Assertions ────────────────────────────────────────────────
             $assertions[] = [
                 'label'    => 'Products added to cart',
-                'expected' => $config['product_count'],
+                'expected' => $expectedCount,
                 'actual'   => count($rootLineItems),
-                'pass'     => count($rootLineItems) === (int) $config['product_count'],
+                'pass'     => count($rootLineItems) === $expectedCount,
             ];
             $assertions[] = [
                 'label'    => 'Quote Total is positive',

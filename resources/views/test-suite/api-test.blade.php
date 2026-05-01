@@ -152,10 +152,79 @@
                             <h4 class="text-sm font-bold text-brand-dark">Test Options</h4>
                         </div>
                         <div class="divide-y divide-gray-100">
+
+                            {{-- Quantity --}}
                             <div class="px-5 py-4">
-                                <x-input-label value="Number of Random Products (1–20)" />
-                                <x-text-input type="number" x-model.number="productCount" min="1" max="20" class="mt-2 block w-32 text-sm" />
+                                <x-input-label value="Quantity per Product" />
+                                <x-text-input type="number" x-model.number="productQuantity" min="1" max="100" class="mt-2 block w-32 text-sm" />
                             </div>
+
+                            {{-- Product Selection --}}
+                            <div class="px-5 py-4">
+                                <x-input-label value="Product Selection" />
+                                <div class="flex gap-6 mt-2 mb-4">
+                                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" x-model="selectionMode" value="random"
+                                               class="border-gray-300 text-brand-teal focus:ring-brand-teal" />
+                                        Random
+                                    </label>
+                                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                        <input type="radio" x-model="selectionMode" value="manual"
+                                               class="border-gray-300 text-brand-teal focus:ring-brand-teal" />
+                                        Select Specific Products
+                                    </label>
+                                </div>
+
+                                {{-- Random mode --}}
+                                <div x-show="selectionMode === 'random'">
+                                    <x-input-label value="Number of Random Products (1–20)" />
+                                    <x-text-input type="number" x-model.number="productCount" min="1" max="20" class="mt-2 block w-32 text-sm" />
+                                </div>
+
+                                {{-- Manual mode --}}
+                                <div x-show="selectionMode === 'manual'">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <button @click="fetchAvailableProducts(availableProducts.length > 0)"
+                                                :disabled="isLoading || !priceListId || !selectedOpportunityId"
+                                                :title="!priceListId || !selectedOpportunityId ? 'Select a Price List and Opportunity first' : (availableProducts.length > 0 ? 'Force reload from Salesforce (clears cache)' : '')"
+                                                class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <span x-text="availableProducts.length > 0 ? '↺ Reload' : 'Load Products'"></span>
+                                        </button>
+                                        <span class="text-xs text-gray-400" x-show="availableProducts.length > 0"
+                                              x-text="`${availableProducts.length} available`"></span>
+                                        <span class="ml-auto text-xs font-semibold text-brand-teal" x-show="selectedProducts.length > 0"
+                                              x-text="`${selectedProducts.length} selected`"></span>
+                                    </div>
+
+                                    <template x-if="availableProducts.length > 0">
+                                        <div>
+                                            <input type="text" x-model="productSearch"
+                                                   placeholder="Type to search products…"
+                                                   class="block w-full border-gray-300 focus:border-brand-teal focus:ring-brand-teal rounded-md shadow-sm text-sm mb-2 px-3 py-2" />
+                                            <div class="border border-gray-200 rounded-lg overflow-y-auto" style="max-height: 15rem;">
+                                                <template x-for="prod in filteredProducts()" :key="prod.Id">
+                                                    <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
+                                                           :class="isProductSelected(prod.Id) ? 'bg-teal-50' : ''">
+                                                        <input type="checkbox"
+                                                               :checked="isProductSelected(prod.Id)"
+                                                               @change="toggleProduct(prod)"
+                                                               class="rounded border-gray-300 text-brand-teal focus:ring-brand-teal shrink-0" />
+                                                        <span class="text-sm text-gray-700" x-text="prod.Name"></span>
+                                                    </label>
+                                                </template>
+                                                <template x-if="filteredProducts().length === 0">
+                                                    <div class="px-3 py-6 text-xs text-gray-400 text-center">No products match your search.</div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="availableProducts.length === 0">
+                                        <p class="text-xs text-gray-400">Click "Load Products" to browse and select.</p>
+                                    </template>
+                                </div>
+                            </div>
+
+                            {{-- Randomize attributes --}}
                             <div class="px-5 py-4">
                                 <label class="flex items-center gap-3 cursor-pointer text-sm text-gray-700">
                                     <input type="checkbox" x-model="randomizeAttributes"
@@ -163,6 +232,8 @@
                                     Randomize attributes on bundle child items
                                 </label>
                             </div>
+
+                            {{-- Override pricing --}}
                             <div class="px-5 py-4">
                                 <label class="flex items-center gap-3 cursor-pointer text-sm text-gray-700">
                                     <input type="checkbox" x-model="overridePricing"
@@ -172,22 +243,39 @@
                                 <template x-if="overridePricing">
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="mt-4">
                                         <div>
-                                            <x-input-label value="OTC Override (leave blank to skip)" />
-                                            <x-text-input type="number" x-model.number="otcOverride" min="0" step="0.01" class="mt-2 block w-full text-sm" placeholder="e.g. 150000" />
+                                            <x-input-label value="OTC Override" />
+                                            <div class="flex gap-1.5 mt-2">
+                                                <x-text-input type="number" x-model.number="otcOverride" min="0" step="1000000"
+                                                              class="flex-1 text-sm" placeholder="e.g. 25000000" />
+                                                <button @click="fakeOtc()" title="15M – 50M in 1M steps"
+                                                        class="px-2.5 py-2 bg-gray-100 hover:bg-brand-teal hover:text-white text-gray-600 rounded-lg border border-gray-200 transition text-base leading-none">
+                                                    🎲
+                                                </button>
+                                            </div>
+                                            <p class="mt-1 text-xs text-gray-400">15M – 50M · 1M steps</p>
                                         </div>
                                         <div>
-                                            <x-input-label value="RC Override (leave blank to skip)" />
-                                            <x-text-input type="number" x-model.number="rcOverride" min="0" step="0.01" class="mt-2 block w-full text-sm" placeholder="e.g. 50000" />
+                                            <x-input-label value="RC Override" />
+                                            <div class="flex gap-1.5 mt-2">
+                                                <x-text-input type="number" x-model.number="rcOverride" min="0" step="500000"
+                                                              class="flex-1 text-sm" placeholder="e.g. 7500000" />
+                                                <button @click="fakeRc()" title="5M – 10M in 500K steps"
+                                                        class="px-2.5 py-2 bg-gray-100 hover:bg-brand-teal hover:text-white text-gray-600 rounded-lg border border-gray-200 transition text-base leading-none">
+                                                    🎲
+                                                </button>
+                                            </div>
+                                            <p class="mt-1 text-xs text-gray-400">5M – 10M · 500K steps</p>
                                         </div>
                                     </div>
                                 </template>
                             </div>
+
                         </div>
                     </div>
 
                     <!-- Run Button -->
                     <button @click="runTest()"
-                            :disabled="running || !selectedOpportunityId || !priceListId"
+                            :disabled="running || !selectedOpportunityId || !priceListId || (selectionMode === 'manual' && selectedProducts.length === 0)"
                             class="w-full py-3 bg-brand-teal text-white font-bold rounded-xl shadow hover:opacity-90 transition disabled:opacity-40 flex items-center justify-center gap-2">
                         <svg x-show="!running" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.34-5.89a1.5 1.5 0 000-2.54L6.3 2.84z"/>
@@ -368,7 +456,14 @@
                 priceListId: '',
                 currency: 'IDR',
                 recordTypeId: '',
+
+                selectionMode: 'random',
                 productCount: 3,
+                productQuantity: 1,
+                availableProducts: [],
+                productSearch: '',
+                selectedProducts: [],
+
                 randomizeAttributes: true,
                 overridePricing: false,
                 otcOverride: null,
@@ -414,7 +509,7 @@
 
                 async fetchRecordTypeId() {
                     try {
-                        const q = `SELECT Id FROM RecordType WHERE DeveloperName = 'EnterpriseQuote' AND SobjectType = 'Quote' LIMIT 1`;
+                        const q = `SELECT Id FROM RecordType WHERE DeveloperName = 'WorkingCart' AND SobjectType = 'Quote' LIMIT 1`;
                         const res = await axios.post('/cpq-simulator/proxy', {
                             method: 'GET',
                             endpoint: `/services/data/v66.0/query?q=${encodeURIComponent(q)}`,
@@ -426,6 +521,64 @@
                     } catch (e) {
                         console.error('Failed to load Record Type ID:', e);
                     }
+                },
+
+                filteredProducts() {
+                    if (!this.productSearch) return this.availableProducts;
+                    const q = this.productSearch.toLowerCase();
+                    return this.availableProducts.filter(p => p.Name.toLowerCase().includes(q));
+                },
+
+                isProductSelected(id) {
+                    return this.selectedProducts.some(p => p.id === id);
+                },
+
+                toggleProduct(product) {
+                    const idx = this.selectedProducts.findIndex(p => p.id === product.Id);
+                    if (idx >= 0) this.selectedProducts.splice(idx, 1);
+                    else this.selectedProducts.push({ id: product.Id, name: product.Name });
+                },
+
+                async fetchAvailableProducts(forceRefresh = false) {
+                    if (!this.priceListId || !this.selectedOpportunityId) {
+                        alert('Select a Price List and an Opportunity before loading products.');
+                        return;
+                    }
+                    this.isLoading = true;
+                    try {
+                        const res = await axios.get('{{ route('cpq-simulator.root-products') }}', {
+                            params: {
+                                price_list_id:  this.priceListId,
+                                opportunity_id: this.selectedOpportunityId,
+                                currency:       this.currency,
+                                record_type_id: this.recordTypeId || null,
+                                persona_id:     this.selectedPersonaId || null,
+                                force_refresh:  forceRefresh ? 1 : 0,
+                            },
+                            timeout: 60000,
+                        });
+                        const records = res.data?.records ?? [];
+                        this.availableProducts = records.map(p => ({
+                            Id:   p.Id?.value ?? p.Id,
+                            Name: p.Product2?.Name ?? p.Name ?? '',
+                        }));
+                        this.selectedProducts = [];
+                    } catch (e) {
+                        console.error('Failed to load products:', e);
+                        alert(`Failed to load products: ${e.response?.data?.message ?? e.message}`);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                fakeOtc() {
+                    // 15M to 50M in 1M increments (36 possible values)
+                    this.otcOverride = (Math.floor(Math.random() * 36) + 15) * 1_000_000;
+                },
+
+                fakeRc() {
+                    // 5M to 10M in 500K increments (11 possible values)
+                    this.rcOverride = (Math.floor(Math.random() * 11) + 10) * 500_000;
                 },
 
                 async fetchPriceLists() {
@@ -441,7 +594,7 @@
                         }, { timeout: 30000 });
                         if (res.data?.data?.records) {
                             this.priceLists = res.data.data.records;
-                            const preferred = this.priceLists.find(p => p.Name.toLowerCase().includes('idr b2b'));
+                            const preferred = this.priceLists.find(p => p.Name.toLowerCase().includes('b2b pricelist'));
                             this.priceListId = preferred ? preferred.Id : (this.priceLists[0]?.Id ?? '');
                         }
                     } catch (e) {
@@ -461,7 +614,10 @@
                             price_list_id:        this.priceListId,
                             currency:             this.currency,
                             record_type_id:       this.recordTypeId,
-                            product_count:        this.productCount,
+                            product_quantity:     this.productQuantity,
+                            selection_mode:       this.selectionMode,
+                            product_count:        this.selectionMode === 'random' ? this.productCount : null,
+                            selected_products:    this.selectionMode === 'manual' ? this.selectedProducts : null,
                             randomize_attributes: this.randomizeAttributes ? 1 : 0,
                             override_pricing:     this.overridePricing ? 1 : 0,
                             otc_override:         this.overridePricing ? this.otcOverride : null,

@@ -23,7 +23,12 @@ class QuoteApiTestController extends Controller
             'price_list_id'        => 'required|string',
             'currency'             => 'required|string|max:10',
             'record_type_id'       => 'required|string',
-            'product_count'        => 'required|integer|min:1|max:20',
+            'product_quantity'     => 'nullable|integer|min:1|max:100',
+            'selection_mode'       => 'nullable|in:random,manual',
+            'product_count'        => 'nullable|integer|min:1|max:20',
+            'selected_products'    => 'nullable|array',
+            'selected_products.*.id'   => 'required_with:selected_products|string',
+            'selected_products.*.name' => 'nullable|string',
             'randomize_attributes' => 'nullable|boolean',
             'override_pricing'     => 'nullable|boolean',
             'otc_override'         => 'nullable|numeric|min:0',
@@ -37,8 +42,10 @@ class QuoteApiTestController extends Controller
 
         $result = $service->runQuoteTest($request->only([
             'opportunity_id', 'quote_name', 'price_list_id', 'currency',
-            'record_type_id', 'product_count', 'randomize_attributes',
-            'override_pricing', 'otc_override', 'rc_override', 'persona_id',
+            'record_type_id', 'product_quantity', 'selection_mode',
+            'product_count', 'selected_products',
+            'randomize_attributes', 'override_pricing',
+            'otc_override', 'rc_override', 'persona_id',
         ]), $sfUser);
 
         return response()->json($result);
