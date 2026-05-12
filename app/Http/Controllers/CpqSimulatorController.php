@@ -160,6 +160,7 @@ class CpqSimulatorController extends Controller
             $response = Http::withToken($token)->acceptJson()->asJson()->timeout(60)->get($baseUrl . $endpoint);
 
             Log::info('[CPQ RootProducts] Products response', ['status' => $response->status()]);
+            Log::debug($response->json()['records']);
 
             if ($response->status() === 401 && $sfUser) {
                 Log::warning('[CPQ RootProducts] 401 — refreshing token and retrying');

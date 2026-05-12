@@ -457,7 +457,7 @@
                 Name: 'Test Automation Quote API 1',
                 PriceListId: '',
                 CurrencyIsoCode: 'IDR',
-                RecordTypeId: '012MS000000GkkxYAC' // Enterprise Quote
+                RecordTypeId: '012MR000000835IYAQ' // Enterprise Quote
             },
             cartId: null,
             cartPriceListId: null,  // pricelist from selected quote

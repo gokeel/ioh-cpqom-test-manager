@@ -24,9 +24,16 @@
                     <x-nav-link :href="route('test-suite.index')" :active="request()->routeIs('test-suite.*')">
                         {{ __('Test Suite') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('product-test-suites.index')" :active="request()->routeIs('product-test-suites.*')">
+                        {{ __('Product Suites') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('test-specs.index')" :active="request()->routeIs('test-specs.*')">
                         {{ __('Spec Files') }}
                     </x-nav-link>
+                    <a href="http://localhost:8100" target="_blank" rel="noopener"
+                       class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
+                        {{ __('Test Report') }}
+                    </a>
                 </div>
             </div>
 
@@ -82,6 +89,10 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <a href="http://localhost:8100" target="_blank" rel="noopener"
+               class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out">
+                {{ __('Test Report') }}
+            </a>
         </div>
 
         <!-- Responsive Settings Options -->

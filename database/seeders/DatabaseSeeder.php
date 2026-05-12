@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -42,5 +41,11 @@ class DatabaseSeeder extends Seeder
 
         // Test Suite (modules, parameters, runtime state)
         $this->call(TestSuiteSeeder::class);
+
+        // Product catalog
+        $this->call(ProductSeeder::class);
+
+        // Product test suites
+        $this->call(ProductTestSuiteSeeder::class);
     }
 }

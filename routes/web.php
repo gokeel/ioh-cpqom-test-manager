@@ -51,6 +51,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/test-suite/runtime-state/{runtimeState}', [App\Http\Controllers\TestSuiteController::class, 'updateRuntimeState'])->name('test-suite.runtime.update');
     Route::delete('/test-suite/runtime-state/{runtimeState}', [App\Http\Controllers\TestSuiteController::class, 'destroyRuntimeState'])->name('test-suite.runtime.destroy');
     
+    // Product Test Suites
+    Route::get('/product-test-suites/products', [App\Http\Controllers\ProductTestSuiteController::class, 'products'])->name('product-test-suites.products');
+    Route::post('/product-test-suites/{productTestSuite}/run', [App\Http\Controllers\ProductTestSuiteController::class, 'run'])->name('product-test-suites.run');
+    Route::post('/product-test-suites/{productTestSuite}/run/{testModule}', [App\Http\Controllers\ProductTestSuiteController::class, 'runModule'])->name('product-test-suites.run-module');
+    Route::resource('product-test-suites', App\Http\Controllers\ProductTestSuiteController::class);
+
     // Modules & Test Cases
     Route::resource('modules', App\Http\Controllers\ModuleController::class);
     Route::put('/modules/{module}/link-test-suite', [App\Http\Controllers\ModuleController::class, 'linkTestSuite'])->name('modules.link-test-suite');

@@ -59,17 +59,12 @@
 
                         {{-- Card body --}}
                         <div class="p-6 flex-1">
-                            {{-- Category + case count --}}
-                            <div class="flex items-center justify-between mb-4">
-                                @if($module->category)
-                                    <span class="text-xs py-0.5 rounded-full bg-brand-teal/10 text-brand-teal font-semibold">
-                                        {{ $module->category }}
-                                    </span>
-                                @else
-                                    <span></span>
-                                @endif
-                                <span class="text-xs text-gray-400 font-medium">{{ $module->test_parameters_count }} {{ Str::plural('case', $module->test_parameters_count) }}</span>
-                            </div>
+                            {{-- Category pill --}}
+                            @if($module->category)
+                                <span class="text-xs py-0.5 rounded-full bg-brand-teal/10 text-brand-teal font-semibold mb-3 inline-block">
+                                    {{ $module->category }}
+                                </span>
+                            @endif
 
                             {{-- Title as link --}}
                             <a href="{{ route('test-suite.show', $module) }}"
@@ -77,9 +72,13 @@
                                 {{ $module->display_name }}
                             </a>
 
+                            {{-- Description --}}
                             @if($module->description)
                                 <p class="text-xs text-gray-400 mt-1.5 line-clamp-2">{{ $module->description }}</p>
                             @endif
+
+                            {{-- Case count --}}
+                            <span class="text-xs text-gray-400 font-medium mt-2 inline-block">{{ $module->test_parameters_count }} {{ Str::plural('case', $module->test_parameters_count) }}</span>
                         </div>
 
                         {{-- Counter --}}
@@ -98,7 +97,7 @@
                                 <form method="POST" action="{{ route('test-suite.counter.reset', $module) }}"
                                     onsubmit="return confirm('Reset counter to 0?')">
                                     @csrf
-                                    <button class="text-xs px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 transition">
+                                    <button class="text-xs px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
                                         Reset
                                     </button>
                                 </form>
