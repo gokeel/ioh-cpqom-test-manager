@@ -69,9 +69,10 @@ class ProductTestSuiteController extends Controller
 
         $moduleIds = $productTestSuite->modules->pluck('id');
 
-        // Latest run per module — groupBy then first() so the DESC order is respected
+        // Latest run per module for the current user — groupBy then first() so the DESC order is respected
         $latestRuns = ProductTestRun::where('product_test_suite_id', $productTestSuite->id)
             ->whereIn('test_module_id', $moduleIds)
+            ->where('user_id', auth()->id())
             ->orderByDesc('started_at')
             ->get()
             ->groupBy('test_module_id')
@@ -237,6 +238,7 @@ class ProductTestSuiteController extends Controller
         $run = ProductTestRun::create([
             'product_test_suite_id' => $productTestSuite->id,
             'test_module_id'        => $testModule->id,
+            'user_id'               => auth()->id(),
             'status'                => 'running',
             'started_at'            => Carbon::now(),
         ]);

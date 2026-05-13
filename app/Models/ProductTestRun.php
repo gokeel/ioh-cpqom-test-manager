@@ -10,6 +10,7 @@ class ProductTestRun extends Model
     protected $fillable = [
         'product_test_suite_id',
         'test_module_id',
+        'user_id',
         'status',
         'log',
         'runner_response',
@@ -28,6 +29,11 @@ class ProductTestRun extends Model
         'started_at'      => 'datetime',
         'finished_at'     => 'datetime',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function suite(): BelongsTo
     {
