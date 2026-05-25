@@ -224,17 +224,7 @@ class ProductTestSuiteController extends Controller
             return response()->json(['error' => 'No spec assigned to this module.'], 422);
         }
 
-        // 1. Write productCode into tc_quote TestParameter
-        $param = TestParameter::firstOrNew([
-            'module_id'    => $testModule->id,
-            'test_case_id' => 'tc_quote',
-        ]);
-        $param->parameters = array_merge($param->parameters ?? [], [
-            'productCode' => $productTestSuite->product->product_code,
-        ]);
-        $param->save();
-
-        // 2. Create a run record
+        // 1. Create a run record
         $run = ProductTestRun::create([
             'product_test_suite_id' => $productTestSuite->id,
             'test_module_id'        => $testModule->id,
@@ -243,14 +233,15 @@ class ProductTestSuiteController extends Controller
             'started_at'            => Carbon::now(),
         ]);
 
-        // 3. Call automation runner — runner responds immediately with { status: "running" },
+        // 2. Call automation runner — runner responds immediately with { status: "running" },
         //    spec executes async and writes back to product_test_runs directly via DB.
         $runnerUrl = rtrim(env('AUTOMATION_RUNNER_URL', 'http://localhost:3333'), '/') . '/run';
 
         try {
             $payload = [
-                'run_id'  => $run->id,
-                'modules' => [$testModule->spec->runner_key],
+                'run_id'       => $run->id,
+                'modules'      => [$testModule->spec->runner_key],
+                'product_code' => $productTestSuite->product->product_code,
             ];
             Log::info('ProductTestSuite runModule → runner', ['url' => $runnerUrl, 'payload' => $payload]);
 
