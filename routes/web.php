@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     // Admin Tester & Persona Routes
     Route::resource('testers', App\Http\Controllers\Admin\TesterController::class);
     Route::resource('sf-users', App\Http\Controllers\Admin\SalesforceUserController::class);
+    Route::resource('sf-environments', App\Http\Controllers\SfEnvironmentController::class)
+        ->except(['create', 'edit', 'show']);
     Route::get('/auth/salesforce/redirect/{sf_user_id}', [App\Http\Controllers\SalesforceOAuthController::class, 'redirect'])->name('salesforce.redirect');
     Route::get('/auth/salesforce/callback', [App\Http\Controllers\SalesforceOAuthController::class, 'callback'])->name('salesforce.callback');
     Route::resource('object-sync', App\Http\Controllers\ObjectSyncController::class);

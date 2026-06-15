@@ -32,5 +32,8 @@
                 {{ $slot }}
             </main>
         </div>
+
+        <!-- Modals pushed by child views via @push('modals') -->
+        @stack('modals')
     </body>
 </html>
