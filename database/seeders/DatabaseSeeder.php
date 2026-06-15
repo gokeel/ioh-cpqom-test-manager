@@ -39,7 +39,13 @@ class DatabaseSeeder extends Seeder
             \App\Models\Module::firstOrCreate(['name' => $mod['name']], $mod);
         }
 
-        // Test Suite (modules, parameters, runtime state)
+        // Test specs (Playwright spec files)
+        $this->call(TestSpecSeeder::class);
+
+        // Test modules (depends on specs being present)
+        $this->call(TestModuleSeeder::class);
+
+        // Runtime state
         $this->call(TestSuiteSeeder::class);
 
         // Product catalog
