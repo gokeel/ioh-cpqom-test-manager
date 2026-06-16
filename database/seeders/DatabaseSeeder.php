@@ -45,7 +45,13 @@ class DatabaseSeeder extends Seeder
         // Test modules (depends on specs being present)
         $this->call(TestModuleSeeder::class);
 
+        // Test parameters for admin user (depends on modules + admin user existing)
+        $this->call(TestParameterSeeder::class);
+
         // Runtime state
+        $this->call(RuntimeStateSeeder::class);
+
+        // (TestSuiteSeeder kept for backward-compat but is now a no-op)
         $this->call(TestSuiteSeeder::class);
 
         // Product catalog
@@ -53,5 +59,8 @@ class DatabaseSeeder extends Seeder
 
         // Product test suites
         $this->call(ProductTestSuiteSeeder::class);
+
+        // Salesforce environment credentials (for Playwright)
+        // $this->call(SfEnvironmentSeeder::class);
     }
 }
