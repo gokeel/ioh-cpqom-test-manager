@@ -2,13 +2,16 @@
 
 namespace Database\Seeders;
 
+use App\Models\RuntimeState;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class RuntimeStateSeeder extends Seeder
 {
     public function run(): void
     {
+        $admin = User::where('email', 'admin@salesforce-test-manager.com')->firstOrFail();
+
         $states = [
             [
                 'state_key'   => 'opportunityId',
@@ -43,12 +46,12 @@ class RuntimeStateSeeder extends Seeder
         ];
 
         foreach ($states as $state) {
-            DB::table('runtime_state')->updateOrInsert(
-                ['state_key' => $state['state_key']],
-                array_merge($state, ['last_updated_at' => now()])
+            RuntimeState::updateOrCreate(
+                ['state_key' => $state['state_key'], 'user_id' => $admin->id],
+                array_merge($state, ['user_id' => $admin->id, 'last_updated_at' => now()])
             );
         }
 
-        $this->command->info('Seeded ' . count($states) . ' runtime state entries.');
+        $this->command->info('Seeded ' . count($states) . ' runtime state entries for [' . $admin->email . '].');
     }
 }

@@ -17,7 +17,7 @@ class TestSuiteController extends Controller
     {
         $modules      = TestModule::withCount(['testParameters' => fn($q) => $q->where('user_id', auth()->id())])->orderBy('display_name')->get();
         $categories   = $modules->pluck('category')->filter()->unique()->sort()->values();
-        $runtimeState = RuntimeState::orderBy('state_key')->get();
+        $runtimeState = RuntimeState::where('user_id', auth()->id())->orderBy('state_key')->get();
         return view('test-suite.index', compact('modules', 'categories', 'runtimeState'));
     }
 
@@ -127,6 +127,8 @@ class TestSuiteController extends Controller
 
     public function updateRuntimeState(Request $request, RuntimeState $runtimeState)
     {
+        abort_if($runtimeState->user_id !== auth()->id(), 403);
+
         $request->validate([
             'state_value' => 'nullable|string|max:1000',
             'description' => 'nullable|string|max:500',
@@ -145,13 +147,19 @@ class TestSuiteController extends Controller
 
     public function storeRuntimeState(Request $request)
     {
+        $userId = auth()->id();
+
         $request->validate([
-            'state_key'   => 'required|string|max:100|unique:runtime_state,state_key',
+            'state_key'   => [
+                'required', 'string', 'max:100',
+                \Illuminate\Validation\Rule::unique('runtime_state')->where('user_id', $userId),
+            ],
             'state_value' => 'nullable|string|max:1000',
             'description' => 'nullable|string|max:500',
         ]);
 
         RuntimeState::create([
+            'user_id'         => $userId,
             'state_key'       => $request->state_key,
             'state_value'     => $request->state_value,
             'description'     => $request->description,
@@ -201,6 +209,8 @@ class TestSuiteController extends Controller
 
     public function destroyRuntimeState(RuntimeState $runtimeState)
     {
+        abort_if($runtimeState->user_id !== auth()->id(), 403);
+
         $key = $runtimeState->state_key;
         $runtimeState->delete();
         return back()->with('success', "State '{$key}' deleted.");
