@@ -18,6 +18,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Admin — User management
+    Route::resource('admin/users', App\Http\Controllers\Admin\UserController::class)
+        ->except(['create', 'edit', 'show'])
+        ->names('admin.users');
+
     // Admin Tester & Persona Routes
     Route::resource('testers', App\Http\Controllers\Admin\TesterController::class);
     Route::resource('sf-users', App\Http\Controllers\Admin\SalesforceUserController::class);
