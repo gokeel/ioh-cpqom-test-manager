@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\ProductTestRun;
 use App\Models\ProductTestSuite;
+use App\Models\RuntimeState;
 use App\Models\TestModule;
+use App\Services\SalesforceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ProductTestRunController extends Controller
@@ -66,6 +69,9 @@ class ProductTestRunController extends Controller
 
         $productTestRun->save();
 
+        // Auto-lookup converted opportunity when lead run succeeds
+        $this->maybeLookupConvertedOpportunity($productTestRun);
+
         return response()->json($this->format($productTestRun));
     }
 
@@ -99,6 +105,53 @@ class ProductTestRunController extends Controller
                 $productTestRun->evidence_images ?? []
             ),
         ]);
+    }
+
+    private function maybeLookupConvertedOpportunity(ProductTestRun $run): void
+    {
+        $ids = $run->created_ids ?? [];
+
+        if (
+            $run->status !== 'success' ||
+            empty($ids['createdLeadId']) ||
+            ! empty($ids['createdOpportunityId'])
+        ) {
+            return;
+        }
+
+        try {
+            $sf    = new SalesforceService();
+            $token = $sf->getAccessToken();
+            if (! $token) {
+                Log::warning('ProductTestRun: could not get SF token for opportunity lookup');
+                return;
+            }
+
+            $soql     = "SELECT ConvertedOpportunityId FROM Lead WHERE Id = '{$ids['createdLeadId']}' LIMIT 1";
+            $result   = $sf->executeQuery($soql, $token);
+            $oppId    = $result['response']['records'][0]['ConvertedOpportunityId'] ?? null;
+
+            Log::debug('ProductTestRun: converted opportunity lookup', [
+                'run_id'  => $run->id,
+                'lead_id' => $ids['createdLeadId'],
+                'opp_id'  => $oppId,
+            ]);
+
+            if (! $oppId) {
+                return;
+            }
+
+            $run->created_ids = array_merge($ids, ['createdOpportunityId' => $oppId]);
+            $run->save();
+
+            // Persist to runtime state so subsequent tests can reference it
+            RuntimeState::updateOrCreate(
+                ['user_id' => $run->user_id, 'state_key' => 'createdOpportunityId'],
+                ['state_value' => $oppId]
+            );
+        } catch (\Throwable $e) {
+            Log::error('ProductTestRun: opportunity lookup failed', ['error' => $e->getMessage()]);
+        }
     }
 
     private function format(ProductTestRun $run): array
