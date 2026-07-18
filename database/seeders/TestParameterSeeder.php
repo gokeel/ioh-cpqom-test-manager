@@ -31,6 +31,11 @@ class TestParameterSeeder extends Seeder
             ],
             [
                 'module_key'   => 'account_mgmt',
+                'test_case_id' => 'tc003',
+                'parameters'   => ['accountName' => 'AT Test BA', 'idReference' => 123456789012, 'phone' => 25567889, 'accountOption' => 'AT Test BA'],
+            ],
+            [
+                'module_key'   => 'account_mgmt',
                 'test_case_id' => 'tc_quote',
                 'parameters'   => ['productCode' => 'O_AI_KNOW'],
             ],
